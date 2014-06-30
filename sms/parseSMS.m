@@ -19,23 +19,23 @@ clear all;
 %% plot it
     
     figSend = figure;
-    hist(datestrs, 36);
+    hist(datestrs, 47);
     datetick('x', 12, 'keepticks');
     xlabel('date');
     ylabel('# sms');
     
     formatDate = @(d) datestr(d/86400000 + datenum(1970,1,1), 1);
-    title(['SMS send between ' formatDate(min(dates)) ' and ' formatDate(max(dates))]);
+    title([num2str(length(dates)) ' SMS send between ' formatDate(min(dates)) ' and ' formatDate(max(dates))]);
     
     saveas(figSend, 'sms_send.png');
     
     figRec = figure;
-    hist(datestrsReceived, 36);
+    hist(datestrsReceived, 47);
     datetick('x', 12, 'keepticks');
     xlabel('date');
     ylabel('# sms');
     
-    title(['SMS received between ' formatDate(min(datesReceived)) ' and ' formatDate(max(datesReceived))]);
+    title([num2str(length(datesReceived)) ' SMS received between ' formatDate(min(datesReceived)) ' and ' formatDate(max(datesReceived))]);
     
     saveas(figRec, 'sms_received.png');
     
