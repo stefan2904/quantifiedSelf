@@ -24,6 +24,7 @@ from optparse import OptionParser
 from xml.dom import minidom
 import dateutil.parser
 import logging
+import calendar
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
    format='%(asctime)s %(process)d %(filename)s %(lineno)d %(levelname)s #| %(message)s',
@@ -39,7 +40,8 @@ def getText(nodelist):
     return ''.join(rc)
 
 class AdiumLogParser(object):
-    def __init__(self, target_year, output_filename, log_pattern, valid_usernames):
+    def __init__(self, target_year, output_filename, log_pattern, valid_usernames, readOnlyDate):
+        self.onlyDate = readOnlyDate
         self.target_year = target_year
         assert isinstance(target_year, int)
         self.output_filename = output_filename
@@ -52,7 +54,10 @@ class AdiumLogParser(object):
         logging.info('outputing data to %s' % self.output_filename)
         output_file = open(self.output_filename, 'wb')
         
-        headers = ['date', 'protocol', 'msg', 'from_addr', 'to_addr', 'account']
+        if self.onlyDate:
+            headers = ['date']
+        else:
+            headers = ['date', 'protocol', 'msg', 'from_addr', 'to_addr', 'account']
         self.writer = csv.DictWriter(output_file, headers)
         self.writer.writerow(dict([[x,x] for x in headers]))
         
@@ -83,13 +88,16 @@ class AdiumLogParser(object):
 
             timestamp = message.getAttribute('time')
             dt = dateutil.parser.parse(timestamp)
-            yield {'protocol' : protocol,
-                'date' : dt,
-                'msg' : message_text,
-                'account' : source_account,
-                'from_addr' : from_addr,
-                'to_addr' : to_addr
-                }
+            if self.onlyDate:
+                yield {'date' : dt}
+            else:
+                yield {'protocol' : protocol,
+                    'date' : dt,
+                    'msg' : message_text,
+                    'account' : source_account,
+                    'from_addr' : from_addr,
+                    'to_addr' : to_addr
+                    }
     
     def run(self):
         self.setupOutput()
@@ -103,10 +111,11 @@ class AdiumLogParser(object):
                     if self.valid_usernames and message['account'] not in self.valid_usernames:
                         skipped += 1
                         continue
-                    if message['date'].year != self.target_year:
+                    if not self.onlyDate and message['date'].year != self.target_year:
                         skipped += 1
                         continue
-                    message['date'] = message['date'].strftime('%Y/%m/%d %H:%M')
+                    if not self.onlyDate: message['date'] = message['date'].strftime('%Y/%m/%d %H:%M')
+                    else: message['date'] = message['date'] = message['date'].replace(day=15, hour=0, minute=0, second=0, microsecond=0).strftime('%s')
                     message = dict([[k,_utf8(v)] for k,v in message.items()])
                     self.writer.writerow(message)
                     success += 1
@@ -131,10 +140,12 @@ def main():
                     help="filter on USERNAME in adium log", metavar="USERNAME", action="append")
     parser.add_option("-y", "--year", dest="year", default=2010,
                     help="transaction year", metavar="YEAR")
+    parser.add_option("-s", "--onlydate", dest="onlydate", default=True,
+                    help="only the date?", metavar="ONLYDATE")
 
     (options, args) = parser.parse_args()
     
-    adium_parse = AdiumLogParser(options.year, options.output_filename, options.log_pattern, options.valid_usernames)
+    adium_parse = AdiumLogParser(options.year, options.output_filename, options.log_pattern, options.valid_usernames, options.onlydate)
     adium_parse.run()
 
 if __name__ == "__main__":
