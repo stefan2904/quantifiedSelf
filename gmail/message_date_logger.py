@@ -32,9 +32,10 @@ def GetMessage(service, user_id, msg_id):
       print >>sys.stderr, 'message', msg_id,  'without date (a hangout?)'
 
   except errors.HttpError, error:
-    print 'An error occurred: %s (%s)' % error, header['value']
+    print >>sys.stderr, 'An error occurred: %s (%s)' % error, header['value']
   except ValueError, error:
-    print 'An ValueError occurred: %s' % error
+    print >>sys.stderr, 'An ValueError occurred: %s' % error
+
 
 def parseMessagePage(messages, service):
   msgs = []
