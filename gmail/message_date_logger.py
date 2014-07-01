@@ -1,5 +1,13 @@
 #!/usr/bin/python
 
+# short script to read messages from gmail inbox
+# (this script outputs only the date as unixtimestamp)
+# requires gmail api token etc.
+# API Quotas: 250.0 units/second/user && 1,000,000,000 units/day
+
+# check out https://developers.google.com/gmail/api/quickstart/quickstart-python
+# and https://console.developers.google.com
+
 import httplib2
 import dateutil.parser
 
